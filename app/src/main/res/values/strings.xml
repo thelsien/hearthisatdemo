@@ -1,0 +1,8 @@
+<resources>
+	<string name="app_name">HearThisAtDemo</string>
+	<string name="artist_image_content_description">Artist image</string>
+	<string name="list_empty_message">The list is currently empty.</string>
+	<string name="list_error_message">Error getting data from server  - %s</string>
+	<string name="artist_track_single_text">%d track</string>
+	<string name="artist_track_multiple_text">%d tracks</string>
+</resources>
