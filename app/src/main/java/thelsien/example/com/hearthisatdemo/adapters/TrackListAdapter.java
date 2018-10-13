@@ -2,6 +2,7 @@ package thelsien.example.com.hearthisatdemo.adapters;
 
 import com.bumptech.glide.Glide;
 
+import android.media.MediaPlayer;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -17,6 +18,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import thelsien.example.com.hearthisatdemo.R;
+import thelsien.example.com.hearthisatdemo.mediaplayer.MediaPlayerProvider;
 import thelsien.example.com.hearthisatdemo.models.Track;
 import thelsien.example.com.hearthisatdemo.retrofit.RetrofitServiceProvider;
 
@@ -36,6 +38,8 @@ public class TrackListAdapter extends RecyclerView.Adapter<TrackListAdapter.View
 	private String userPermalink;
 
 	private int page = 0;
+
+	private int currentlyPlayingAdapterPosition = -1;
 
 	public TrackListAdapter(@NonNull final String artistPermalink,
 			@NonNull final AdapterItemsLoadedListener loaderListener) {
@@ -104,8 +108,43 @@ public class TrackListAdapter extends RecyclerView.Adapter<TrackListAdapter.View
 				.load(track.getArtworkUrl())
 				.into(viewHolder.trackImageView);
 
-		//TODO change media player icon based on the selected track id.
-		//TODO add an on click event for media player icon.
+		final String currentlyPlayingTrack = MediaPlayerProvider.getInstance().getCurrentlyPlayingTrackId();
+
+		if (currentlyPlayingTrack != null && currentlyPlayingTrack.equals(track.getId())) {
+			viewHolder.mediaPlayerIconView.setImageResource(R.drawable.ic_action_stop);
+			viewHolder.mediaPlayerIconView.setOnClickListener(clickedView -> {
+				MediaPlayerProvider.getInstance().stopPlayingTrack();
+				viewHolder.mediaPlayerIconView.setImageResource(R.drawable.ic_action_play);
+			});
+		} else {
+			viewHolder.mediaPlayerIconView.setImageResource(R.drawable.ic_action_play);
+			viewHolder.mediaPlayerIconView.setOnClickListener(getStartPlayingListener(track, viewHolder));
+		}
+	}
+
+	public View.OnClickListener getStopListener(@NonNull final Track track, @NonNull final ViewHolder viewHolder) {
+		return clickedView -> {
+			MediaPlayerProvider.getInstance().stopPlayingTrack();
+			viewHolder.mediaPlayerIconView.setImageResource(R.drawable.ic_action_play);
+			viewHolder.mediaPlayerIconView.setOnClickListener(getStartPlayingListener(track, viewHolder));
+		};
+	}
+
+	public View.OnClickListener getStartPlayingListener(@NonNull final Track track,
+			@NonNull final ViewHolder viewHolder) {
+		return clickedView -> {
+			MediaPlayerProvider.getInstance().startPreparePlayingUrl(track.getId(), track.getStreamUrl(),
+					mp -> {
+						mp.start();
+						viewHolder.mediaPlayerIconView.setImageResource(R.drawable.ic_action_stop);
+						viewHolder.mediaPlayerIconView.setOnClickListener(getStopListener(track, viewHolder));
+					},
+					mp -> {
+						MediaPlayerProvider.getInstance().stopPlayingTrack();
+						viewHolder.mediaPlayerIconView.setImageResource(R.drawable.ic_action_play);
+						viewHolder.mediaPlayerIconView.setOnClickListener(getStartPlayingListener(track, viewHolder));
+					});
+		};
 	}
 
 	@Override
@@ -113,7 +152,7 @@ public class TrackListAdapter extends RecyclerView.Adapter<TrackListAdapter.View
 		return items.size();
 	}
 
-	class ViewHolder extends RecyclerView.ViewHolder {
+	class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, MediaPlayer.OnPreparedListener {
 
 		TextView trackNameView;
 
@@ -127,6 +166,25 @@ public class TrackListAdapter extends RecyclerView.Adapter<TrackListAdapter.View
 			trackNameView = itemView.findViewById(R.id.tv_track_name);
 			trackImageView = itemView.findViewById(R.id.iv_track_image);
 			mediaPlayerIconView = itemView.findViewById(R.id.iv_media_player_icon);
+
+			mediaPlayerIconView.setOnClickListener(this);
+		}
+
+		@Override
+		public void onPrepared(final MediaPlayer mp) {
+
+		}
+
+		@Override
+		public void onClick(final View clickedView) {
+			final String currentTrackId = MediaPlayerProvider.getInstance().getCurrentlyPlayingTrackId();
+			final Track track = items.get(getAdapterPosition());
+
+			if (currentlyPlayingAdapterPosition < 0) {
+				notifyItemChanged(currentlyPlayingAdapterPosition);
+			}
+
+			currentlyPlayingAdapterPosition = getAdapterPosition();
 		}
 	}
 }
