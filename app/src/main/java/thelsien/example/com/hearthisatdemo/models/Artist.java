@@ -1,6 +1,8 @@
 package thelsien.example.com.hearthisatdemo.models;
 
-public class Artist {
+import java.io.Serializable;
+
+public class Artist implements Serializable {
 	private String id;
 
 	private String username;

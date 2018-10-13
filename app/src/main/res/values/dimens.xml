@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<dimen name="artist_item_image_width">50dp</dimen>
+	<dimen name="padding_8dp">8dp</dimen>
+	<dimen name="artist_details_image_height">150dp</dimen>
 </resources>

@@ -33,10 +33,10 @@ public class PopularArtistsAdapter extends RecyclerView.Adapter<PopularArtistsAd
 	private static final int PAGE_PER_COUNT = 20;
 
 	@NonNull
-	private final LoaderListener loadListener;
+	private final AdapterItemsLoadedListener loadListener;
 
 	@Nullable
-	private ArtistClickedListener artistClickedListener;
+	private AdapterItemClickedListener<Artist> adapterItemClickedListener;
 
 	@NonNull
 	private List<Pair<Artist, List<Track>>> items = new ArrayList<>();
@@ -46,7 +46,7 @@ public class PopularArtistsAdapter extends RecyclerView.Adapter<PopularArtistsAd
 	 */
 	private int pageNumber = 0;
 
-	public PopularArtistsAdapter(@NonNull final LoaderListener loadListener) {
+	public PopularArtistsAdapter(@NonNull final AdapterItemsLoadedListener loadListener) {
 		this.loadListener = loadListener;
 
 		loadPage();
@@ -167,24 +167,8 @@ public class PopularArtistsAdapter extends RecyclerView.Adapter<PopularArtistsAd
 		return items.size();
 	}
 
-	public void setOnArtistClickedListener(@NonNull final ArtistClickedListener listener) {
-		this.artistClickedListener = listener;
-	}
-
-	/**
-	 * Handles the cases when the artist list items are loaded or an error happened.
-	 */
-	public interface LoaderListener {
-		void onListItemsLoaded(int count);
-
-		void onListLoadError(@NonNull String message);
-	}
-
-	/**
-	 * Handles the item clicks in the artist list.
-	 */
-	public interface ArtistClickedListener {
-		void onArtistClicked(@NonNull final Artist artist);
+	public void setOnArtistClickedListener(@NonNull final AdapterItemClickedListener<Artist> listener) {
+		this.adapterItemClickedListener = listener;
 	}
 
 	class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -207,12 +191,12 @@ public class PopularArtistsAdapter extends RecyclerView.Adapter<PopularArtistsAd
 
 		@Override
 		public void onClick(final View v) {
-			if (artistClickedListener == null) {
+			if (adapterItemClickedListener == null) {
 				return;
 			}
 
 			final Artist artist = items.get(getAdapterPosition()).first;
-			artistClickedListener.onArtistClicked(artist);
+			adapterItemClickedListener.onListItemClicked(artist);
 		}
 	}
 }
