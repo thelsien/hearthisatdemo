@@ -2,9 +2,11 @@ package thelsien.example.com.hearthisatdemo.mediaplayer;
 
 public interface MediaPlayerController {
 
-	void onStartPressed();
+    void onResumePressed();
 
-	void onPausePressed();
+    void onStartPressed();
 
-	void onStopPressed();
+    void onPausePressed();
+
+    void onStopPressed();
 }

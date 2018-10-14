@@ -10,115 +10,120 @@ import java.util.Map;
 
 import thelsien.example.com.hearthisatdemo.models.Track;
 
-public class MediaPlayerProvider {
+public class MediaPlayerProvider implements MediaPlayer.OnPreparedListener {
 
-	private static MediaPlayerProvider instance;
+    private static MediaPlayerProvider instance;
 
-	@Nullable
-	private MediaPlayer mediaPlayer;
+    @Nullable
+    private MediaPlayer mediaPlayer;
 
-	@Nullable
-	private Track currentlyPlayingTrack;
+    @Nullable
+    private Track currentlyPlayingTrack;
 
-	@NonNull
-	private Map<String, MediaPlayerController> mediaPlayerControllers = new HashMap<>();
+    @NonNull
+    private Map<String, MediaPlayerController> mediaPlayerControllers = new HashMap<>();
 
-	private MediaPlayerProvider() {
-	}
+    private MediaPlayerProvider() {
+    }
 
-	public static MediaPlayerProvider getInstance() {
-		if (instance == null) {
-			instance = new MediaPlayerProvider();
-		}
+    public static MediaPlayerProvider getInstance() {
+        if (instance == null) {
+            instance = new MediaPlayerProvider();
+        }
 
-		return instance;
-	}
+        return instance;
+    }
 
-	public void startPreparePlayingUrl(@NonNull final Track track,
-			@NonNull final MediaPlayer.OnPreparedListener preparedListener,
-			@NonNull final MediaPlayer.OnCompletionListener completionListener) {
-		this.currentlyPlayingTrack = track;
+    public void startPreparePlayingUrl(@NonNull final Track track,
+                                       @NonNull final MediaPlayer.OnPreparedListener preparedListener,
+                                       @NonNull final MediaPlayer.OnCompletionListener completionListener) {
+        this.currentlyPlayingTrack = track;
 
-		if (mediaPlayer == null) {
-			mediaPlayer = new MediaPlayer();
-		}
+        if (mediaPlayer == null) {
+            mediaPlayer = new MediaPlayer();
+        }
 
-		mediaPlayer.reset();
+        for (final Map.Entry<String, MediaPlayerController> entry : mediaPlayerControllers.entrySet()) {
+            entry.getValue().onStartPressed();
+        }
 
-		try {
-			mediaPlayer.setDataSource(currentlyPlayingTrack.getStreamUrl());
-		} catch (IllegalArgumentException | IOException e) {
-			e.printStackTrace();
-			return;
-		}
+        mediaPlayer.reset();
 
-		mediaPlayer.setOnErrorListener((mp, what, extra) -> {
-			mediaPlayer.release();
-			mediaPlayer = null;
-			return true;
-		});
-		mediaPlayer.setScreenOnWhilePlaying(true);
-		mediaPlayer.setOnCompletionListener(completionListener);
-		mediaPlayer.setOnPreparedListener(preparedListener);
-		mediaPlayer.prepareAsync();
-		for (final Map.Entry<String, MediaPlayerController> entry : mediaPlayerControllers.entrySet()) {
-			entry.getValue().onStartPressed();
-		}
-	}
+        try {
+            mediaPlayer.setDataSource(currentlyPlayingTrack.getStreamUrl());
+        } catch (IllegalArgumentException | IOException e) {
+            e.printStackTrace();
+            return;
+        }
 
-	public void pausePlayingTrack() {
-		if (mediaPlayer == null) {
-			return;
-		}
+        mediaPlayer.setScreenOnWhilePlaying(true);
+        mediaPlayer.setOnCompletionListener(completionListener);
+        mediaPlayer.setOnPreparedListener(this);
+        mediaPlayer.prepareAsync();
+    }
 
-		mediaPlayer.pause();
+    public void pausePlayingTrack() {
+        if (mediaPlayer == null) {
+            return;
+        }
 
-		for (final Map.Entry<String, MediaPlayerController> entry : mediaPlayerControllers.entrySet()) {
-			entry.getValue().onPausePressed();
-		}
-	}
+        mediaPlayer.pause();
 
-	public void resumePlayingTrack() {
-		if (mediaPlayer == null) {
-			return;
-		}
+        for (final Map.Entry<String, MediaPlayerController> entry : mediaPlayerControllers.entrySet()) {
+            entry.getValue().onPausePressed();
+        }
+    }
 
-		mediaPlayer.start();
+    public void resumePlayingTrack() {
+        if (mediaPlayer == null) {
+            return;
+        }
 
-		for (final Map.Entry<String, MediaPlayerController> entry : mediaPlayerControllers.entrySet()) {
-			entry.getValue().onStartPressed();
-		}
-	}
+        mediaPlayer.start();
 
-	public void stopPlayingTrack() {
-		currentlyPlayingTrack = null;
-		if (mediaPlayer == null) {
-			return;
-		}
+        for (final Map.Entry<String, MediaPlayerController> entry : mediaPlayerControllers.entrySet()) {
+            entry.getValue().onResumePressed();
+        }
+    }
 
-		mediaPlayer.release();
-		mediaPlayer = null;
+    public void stopPlayingTrack() {
+        currentlyPlayingTrack = null;
+        if (mediaPlayer == null) {
+            return;
+        }
 
-		for (final Map.Entry<String, MediaPlayerController> entry : mediaPlayerControllers.entrySet()) {
-			entry.getValue().onStopPressed();
-		}
-	}
+        mediaPlayer.release();
+        mediaPlayer = null;
 
-	public void addMediaPlayerManager(@NonNull final String key,
-			@NonNull final MediaPlayerController mediaPlayerController) {
-		mediaPlayerControllers.put(key, mediaPlayerController);
-	}
+        for (final Map.Entry<String, MediaPlayerController> entry : mediaPlayerControllers.entrySet()) {
+            entry.getValue().onStopPressed();
+        }
+    }
 
-	public void removeMediaPlayerManager(@NonNull final String key) {
-		mediaPlayerControllers.remove(key);
-	}
+    public void addMediaPlayerManager(@NonNull final String key,
+                                      @NonNull final MediaPlayerController mediaPlayerController) {
+        mediaPlayerControllers.put(key, mediaPlayerController);
+    }
 
-	@Nullable
-	public String getCurrentlyPlayingTrackTitle() {
-		if (currentlyPlayingTrack == null) {
-			return null;
-		}
+    public void removeMediaPlayerManager(@NonNull final String key) {
+        mediaPlayerControllers.remove(key);
+    }
 
-		return currentlyPlayingTrack.getTitle();
-	}
+    @Nullable
+    public String getCurrentlyPlayingTrackTitle() {
+        if (currentlyPlayingTrack == null) {
+            return null;
+        }
+
+        return currentlyPlayingTrack.getTitle();
+    }
+
+    @Override
+    public void onPrepared(MediaPlayer mediaPlayer) {
+        mediaPlayer.start();
+
+        for (final Map.Entry<String, MediaPlayerController> entry : mediaPlayerControllers.entrySet()) {
+            entry.getValue().onResumePressed();
+        }
+    }
 }
