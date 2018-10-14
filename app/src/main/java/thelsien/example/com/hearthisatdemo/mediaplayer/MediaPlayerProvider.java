@@ -35,7 +35,6 @@ public class MediaPlayerProvider implements MediaPlayer.OnPreparedListener {
     }
 
     public void startPreparePlayingUrl(@NonNull final Track track,
-                                       @NonNull final MediaPlayer.OnPreparedListener preparedListener,
                                        @NonNull final MediaPlayer.OnCompletionListener completionListener) {
         this.currentlyPlayingTrack = track;
 

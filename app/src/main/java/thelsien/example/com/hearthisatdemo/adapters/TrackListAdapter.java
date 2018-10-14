@@ -181,7 +181,8 @@ public class TrackListAdapter extends RecyclerView.Adapter<TrackListAdapter.View
 
         @Override
         public void onClick(final View clickedView) {
-            if (currentlyPlayingAdapterPosition < 0 || currentlyPlayingAdapterPosition != getAdapterPosition()) {
+            if (currentlyPlayingAdapterPosition < 0 ||
+                    currentlyPlayingAdapterPosition != getAdapterPosition()) {
                 notifyItemChanged(currentlyPlayingAdapterPosition);
             }
 
@@ -198,7 +199,8 @@ public class TrackListAdapter extends RecyclerView.Adapter<TrackListAdapter.View
             currentlyPlayingAdapterPosition = getAdapterPosition();
             final Track track = items.get(getAdapterPosition());
             isPrepared = false;
-            MediaPlayerProvider.getInstance().startPreparePlayingUrl(track, this, MediaPlayer::release);
+            MediaPlayerProvider.getInstance().startPreparePlayingUrl(track,
+                    mp -> MediaPlayerProvider.getInstance().stopPlayingTrack());
 
             mediaPlayerIconView.setTag(MEDIA_PLAYING_TAG);
             notifyItemChanged(currentlyPlayingAdapterPosition);
