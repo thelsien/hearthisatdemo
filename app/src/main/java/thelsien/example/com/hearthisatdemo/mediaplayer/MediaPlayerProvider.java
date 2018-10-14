@@ -3,9 +3,10 @@ package thelsien.example.com.hearthisatdemo.mediaplayer;
 import android.media.MediaPlayer;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import java.io.IOException;
+
+import thelsien.example.com.hearthisatdemo.models.Track;
 
 public class MediaPlayerProvider {
 
@@ -15,7 +16,10 @@ public class MediaPlayerProvider {
 	private MediaPlayer mediaPlayer;
 
 	@Nullable
-	private String currentlyPlayingTrackId;
+	private Track currentlyPlayingTrack;
+
+	@Nullable
+	private MediaPlayerManager mediaPlayerManager;
 
 	private MediaPlayerProvider() {
 	}
@@ -28,10 +32,10 @@ public class MediaPlayerProvider {
 		return instance;
 	}
 
-	public void startPreparePlayingUrl(final String trackId, @NonNull final String url,
+	public void startPreparePlayingUrl(@NonNull final Track track,
 			@NonNull final MediaPlayer.OnPreparedListener preparedListener,
 			@NonNull final MediaPlayer.OnCompletionListener completionListener) {
-		currentlyPlayingTrackId = trackId;
+		this.currentlyPlayingTrack = track;
 
 		if (mediaPlayer == null) {
 			mediaPlayer = new MediaPlayer();
@@ -40,7 +44,7 @@ public class MediaPlayerProvider {
 		mediaPlayer.reset();
 
 		try {
-			mediaPlayer.setDataSource(url);
+			mediaPlayer.setDataSource(currentlyPlayingTrack.getStreamUrl());
 		} catch (IllegalArgumentException | IOException e) {
 			e.printStackTrace();
 			return;
@@ -49,44 +53,69 @@ public class MediaPlayerProvider {
 		mediaPlayer.setScreenOnWhilePlaying(true);
 		mediaPlayer.setOnCompletionListener(completionListener);
 		mediaPlayer.setOnPreparedListener(preparedListener);
-		mediaPlayer.setOnInfoListener(new MediaPlayer.OnInfoListener() {
-			@Override
-			public boolean onInfo(final MediaPlayer mp, final int what, final int extra) {
-				switch (what) {
-					case MediaPlayer.MEDIA_INFO_AUDIO_NOT_PLAYING:
-						break;
-					case MediaPlayer.MEDIA_INFO_BAD_INTERLEAVING:
-						break;
-					case MediaPlayer.MEDIA_INFO_BUFFERING_END:
-						break;
-					case MediaPlayer.MEDIA_INFO_BUFFERING_START:
-						break;
-					case MediaPlayer.MEDIA_INFO_METADATA_UPDATE:
-						break;
-					default:
-						break;
-				}
-
-				Log.d(MediaPlayer.class.getSimpleName(), "info - " + what);
-
-				return false;
-			}
-		});
 		mediaPlayer.prepareAsync();
+		if (mediaPlayerManager != null) {
+			mediaPlayerManager.onStartPressed();
+		}
+	}
+
+	public void pausePlayingTrack() {
+		if (mediaPlayer == null) {
+			return;
+		}
+
+		mediaPlayer.pause();
+
+		if (mediaPlayerManager != null) {
+			mediaPlayerManager.onPausePressed();
+		}
+	}
+
+	public void resumePlayingTrack() {
+		if (mediaPlayer == null) {
+			return;
+		}
+
+		mediaPlayer.start();
+
+		if (mediaPlayerManager != null) {
+			mediaPlayerManager.onStartPressed();
+		}
 	}
 
 	@Nullable
 	public String getCurrentlyPlayingTrackId() {
-		return currentlyPlayingTrackId;
+		if (currentlyPlayingTrack == null) {
+			return null;
+		}
+
+		return currentlyPlayingTrack.getId();
 	}
 
 	public void stopPlayingTrack() {
-		currentlyPlayingTrackId = null;
+		currentlyPlayingTrack = null;
 		if (mediaPlayer == null) {
 			return;
 		}
 		mediaPlayer.stop();
 		mediaPlayer.release();
 		mediaPlayer = null;
+
+		if (mediaPlayerManager != null) {
+			mediaPlayerManager.onStopPressed();
+		}
+	}
+
+	public void setMediaPlayerManager(@NonNull final MediaPlayerManager mediaPlayerManager) {
+		this.mediaPlayerManager = mediaPlayerManager;
+	}
+
+	@Nullable
+	public String getCurrentlyPlayingTrackTitle() {
+		if (currentlyPlayingTrack == null) {
+			return null;
+		}
+
+		return currentlyPlayingTrack.getTitle();
 	}
 }

@@ -24,6 +24,10 @@ import thelsien.example.com.hearthisatdemo.retrofit.RetrofitServiceProvider;
 
 public class TrackListAdapter extends RecyclerView.Adapter<TrackListAdapter.ViewHolder> {
 
+	private static final String MEDIA_PLAYING_TAG = "playing";
+
+	private static final String MEDIA_STOPPED_TAG = "stopped";
+
 	private static final String ARTIST_TRACKS_TYPE = "tracks";
 
 	private static final int ARTIST_TRACKS_COUNT = 20;
@@ -108,43 +112,13 @@ public class TrackListAdapter extends RecyclerView.Adapter<TrackListAdapter.View
 				.load(track.getArtworkUrl())
 				.into(viewHolder.trackImageView);
 
-		final String currentlyPlayingTrack = MediaPlayerProvider.getInstance().getCurrentlyPlayingTrackId();
-
-		if (currentlyPlayingTrack != null && currentlyPlayingTrack.equals(track.getId())) {
+		if (currentlyPlayingAdapterPosition == position) {
 			viewHolder.mediaPlayerIconView.setImageResource(R.drawable.ic_action_stop);
-			viewHolder.mediaPlayerIconView.setOnClickListener(clickedView -> {
-				MediaPlayerProvider.getInstance().stopPlayingTrack();
-				viewHolder.mediaPlayerIconView.setImageResource(R.drawable.ic_action_play);
-			});
+			viewHolder.mediaPlayerIconView.setTag(MEDIA_PLAYING_TAG);
 		} else {
 			viewHolder.mediaPlayerIconView.setImageResource(R.drawable.ic_action_play);
-			viewHolder.mediaPlayerIconView.setOnClickListener(getStartPlayingListener(track, viewHolder));
+			viewHolder.mediaPlayerIconView.setTag(MEDIA_STOPPED_TAG);
 		}
-	}
-
-	public View.OnClickListener getStopListener(@NonNull final Track track, @NonNull final ViewHolder viewHolder) {
-		return clickedView -> {
-			MediaPlayerProvider.getInstance().stopPlayingTrack();
-			viewHolder.mediaPlayerIconView.setImageResource(R.drawable.ic_action_play);
-			viewHolder.mediaPlayerIconView.setOnClickListener(getStartPlayingListener(track, viewHolder));
-		};
-	}
-
-	public View.OnClickListener getStartPlayingListener(@NonNull final Track track,
-			@NonNull final ViewHolder viewHolder) {
-		return clickedView -> {
-			MediaPlayerProvider.getInstance().startPreparePlayingUrl(track.getId(), track.getStreamUrl(),
-					mp -> {
-						mp.start();
-						viewHolder.mediaPlayerIconView.setImageResource(R.drawable.ic_action_stop);
-						viewHolder.mediaPlayerIconView.setOnClickListener(getStopListener(track, viewHolder));
-					},
-					mp -> {
-						MediaPlayerProvider.getInstance().stopPlayingTrack();
-						viewHolder.mediaPlayerIconView.setImageResource(R.drawable.ic_action_play);
-						viewHolder.mediaPlayerIconView.setOnClickListener(getStartPlayingListener(track, viewHolder));
-					});
-		};
 	}
 
 	@Override
@@ -177,14 +151,26 @@ public class TrackListAdapter extends RecyclerView.Adapter<TrackListAdapter.View
 
 		@Override
 		public void onClick(final View clickedView) {
-			final String currentTrackId = MediaPlayerProvider.getInstance().getCurrentlyPlayingTrackId();
-			final Track track = items.get(getAdapterPosition());
-
-			if (currentlyPlayingAdapterPosition < 0) {
+			if (currentlyPlayingAdapterPosition < 0 || currentlyPlayingAdapterPosition != getAdapterPosition()) {
 				notifyItemChanged(currentlyPlayingAdapterPosition);
 			}
 
+			if (mediaPlayerIconView.getTag().equals(MEDIA_PLAYING_TAG)) {
+				MediaPlayerProvider.getInstance().stopPlayingTrack();
+				mediaPlayerIconView.setTag(MEDIA_STOPPED_TAG);
+
+				notifyItemChanged(currentlyPlayingAdapterPosition);
+
+				currentlyPlayingAdapterPosition = -1;
+				return;
+			}
+
 			currentlyPlayingAdapterPosition = getAdapterPosition();
+			final Track track = items.get(getAdapterPosition());
+			MediaPlayerProvider.getInstance().startPreparePlayingUrl(track, MediaPlayer::start, MediaPlayer::release);
+
+			mediaPlayerIconView.setTag(MEDIA_PLAYING_TAG);
+			notifyItemChanged(currentlyPlayingAdapterPosition);
 		}
 	}
 }

@@ -8,4 +8,6 @@
 	<string name="artist_track_multiple_text">%d tracks</string>
 	<string name="track_item_start_stop_description">Start/stop playing track</string>
 	<string name="artist_details_image_description">Artist image</string>
+	<string name="main_activity_play_pause_button_description">Play/pause button</string>
+	<string name="main_activity_stop_button_description">Stop button</string>
 </resources>
