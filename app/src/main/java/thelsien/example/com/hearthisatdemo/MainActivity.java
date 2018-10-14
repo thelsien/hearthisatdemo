@@ -7,13 +7,13 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import thelsien.example.com.hearthisatdemo.mediaplayer.MediaPlayerManager;
+import thelsien.example.com.hearthisatdemo.mediaplayer.MediaPlayerController;
 import thelsien.example.com.hearthisatdemo.mediaplayer.MediaPlayerProvider;
 import thelsien.example.com.hearthisatdemo.models.Artist;
 
-public class MainActivity extends AppCompatActivity implements MediaPlayerManager {
+public class MainActivity extends AppCompatActivity implements MediaPlayerController {
 
-	private static final String TAG = MainActivity.class.getSimpleName();
+	private static final String MEDIA_CONTROLLER_ACTIVITY_KEY = "activity_media_controller_key";
 
 	private static final String BACK_STACK_DETAILS_FRAGMENT_KEY = "back_stack_details_fragment_key";
 
@@ -39,12 +39,18 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerManage
 			MediaPlayerProvider.getInstance().stopPlayingTrack();
 		});
 
-		MediaPlayerProvider.getInstance().setMediaPlayerManager(this);
+		MediaPlayerProvider.getInstance().addMediaPlayerManager(MEDIA_CONTROLLER_ACTIVITY_KEY, this);
 
 		getSupportFragmentManager()
 				.beginTransaction()
 				.replace(R.id.content, new PopularArtistsListFragment())
 				.commit();
+	}
+
+	@Override
+	protected void onStop() {
+		MediaPlayerProvider.getInstance().removeMediaPlayerManager(MEDIA_CONTROLLER_ACTIVITY_KEY);
+		super.onStop();
 	}
 
 	public void changeFragmentToArtistDetails(final Artist artist) {

@@ -18,11 +18,13 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import thelsien.example.com.hearthisatdemo.R;
+import thelsien.example.com.hearthisatdemo.mediaplayer.MediaPlayerController;
 import thelsien.example.com.hearthisatdemo.mediaplayer.MediaPlayerProvider;
 import thelsien.example.com.hearthisatdemo.models.Track;
 import thelsien.example.com.hearthisatdemo.retrofit.RetrofitServiceProvider;
 
-public class TrackListAdapter extends RecyclerView.Adapter<TrackListAdapter.ViewHolder> {
+public class TrackListAdapter extends RecyclerView.Adapter<TrackListAdapter.ViewHolder>
+		implements MediaPlayerController {
 
 	private static final String MEDIA_PLAYING_TAG = "playing";
 
@@ -40,6 +42,8 @@ public class TrackListAdapter extends RecyclerView.Adapter<TrackListAdapter.View
 
 	@NonNull
 	private String userPermalink;
+
+	private boolean isPrepared = false;
 
 	private int page = 0;
 
@@ -112,18 +116,37 @@ public class TrackListAdapter extends RecyclerView.Adapter<TrackListAdapter.View
 				.load(track.getArtworkUrl())
 				.into(viewHolder.trackImageView);
 
-		if (currentlyPlayingAdapterPosition == position) {
-			viewHolder.mediaPlayerIconView.setImageResource(R.drawable.ic_action_stop);
-			viewHolder.mediaPlayerIconView.setTag(MEDIA_PLAYING_TAG);
-		} else {
+		if (currentlyPlayingAdapterPosition != position) {
+			viewHolder.mediaPlayerIconView.setVisibility(View.VISIBLE);
 			viewHolder.mediaPlayerIconView.setImageResource(R.drawable.ic_action_play);
 			viewHolder.mediaPlayerIconView.setTag(MEDIA_STOPPED_TAG);
+		} else {
+			viewHolder.mediaPlayerIconView.setVisibility(isPrepared ? View.GONE : View.VISIBLE);
+			viewHolder.mediaPlayerIconView.setImageResource(R.drawable.ic_action_stop);
+			viewHolder.mediaPlayerIconView.setTag(MEDIA_PLAYING_TAG);
 		}
 	}
 
 	@Override
 	public int getItemCount() {
 		return items.size();
+	}
+
+	@Override
+	public void onStartPressed() {
+
+	}
+
+	@Override
+	public void onPausePressed() {
+
+	}
+
+	@Override
+	public void onStopPressed() {
+		final int positionToNotify = currentlyPlayingAdapterPosition;
+		currentlyPlayingAdapterPosition = -1;
+		notifyItemChanged(positionToNotify);
 	}
 
 	class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, MediaPlayer.OnPreparedListener {
@@ -146,7 +169,9 @@ public class TrackListAdapter extends RecyclerView.Adapter<TrackListAdapter.View
 
 		@Override
 		public void onPrepared(final MediaPlayer mp) {
-
+			mp.start();
+			isPrepared = true;
+			notifyItemChanged(currentlyPlayingAdapterPosition);
 		}
 
 		@Override
@@ -167,7 +192,8 @@ public class TrackListAdapter extends RecyclerView.Adapter<TrackListAdapter.View
 
 			currentlyPlayingAdapterPosition = getAdapterPosition();
 			final Track track = items.get(getAdapterPosition());
-			MediaPlayerProvider.getInstance().startPreparePlayingUrl(track, MediaPlayer::start, MediaPlayer::release);
+			isPrepared = false;
+			MediaPlayerProvider.getInstance().startPreparePlayingUrl(track, this, MediaPlayer::release);
 
 			mediaPlayerIconView.setTag(MEDIA_PLAYING_TAG);
 			notifyItemChanged(currentlyPlayingAdapterPosition);

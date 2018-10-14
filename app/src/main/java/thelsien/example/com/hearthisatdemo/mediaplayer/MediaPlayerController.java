@@ -1,6 +1,6 @@
 package thelsien.example.com.hearthisatdemo.mediaplayer;
 
-public interface MediaPlayerManager {
+public interface MediaPlayerController {
 
 	void onStartPressed();
 

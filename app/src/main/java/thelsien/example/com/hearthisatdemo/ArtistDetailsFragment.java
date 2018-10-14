@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import thelsien.example.com.hearthisatdemo.adapters.AdapterItemsLoadedListener;
 import thelsien.example.com.hearthisatdemo.adapters.TrackListAdapter;
+import thelsien.example.com.hearthisatdemo.mediaplayer.MediaPlayerProvider;
 import thelsien.example.com.hearthisatdemo.models.Artist;
 import thelsien.example.com.hearthisatdemo.models.Track;
 
@@ -20,12 +21,16 @@ public class ArtistDetailsFragment extends BaseListFragment<Track> implements Ad
 
 	private static final String ARGUMENTS_ARTIST_KEY = "arguments_artist_key";
 
+	private static final String MEDIA_CONTROLLER_ADAPTER_KEY = "adaper_key_media_controller";
+
 	@Nullable
 	private Artist artist;
 
 	private TextView artistNameView;
 
 	private ImageView artistImageView;
+
+	private TrackListAdapter adapter;
 
 	public static ArtistDetailsFragment createInstance(@NonNull final Artist artist) {
 		final ArtistDetailsFragment fragment = new ArtistDetailsFragment();
@@ -73,7 +78,8 @@ public class ArtistDetailsFragment extends BaseListFragment<Track> implements Ad
 
 		super.setupList();
 
-		final TrackListAdapter adapter = new TrackListAdapter(artist.getPermalink(), this);
+		adapter = new TrackListAdapter(artist.getPermalink(), this);
+		MediaPlayerProvider.getInstance().addMediaPlayerManager(MEDIA_CONTROLLER_ADAPTER_KEY, adapter);
 
 		listView.setAdapter(adapter);
 	}
@@ -81,5 +87,12 @@ public class ArtistDetailsFragment extends BaseListFragment<Track> implements Ad
 	@Override
 	public void onListItemClicked(@NonNull final Track item) {
 
+	}
+
+	@Override
+	public void onDetach() {
+		super.onDetach();
+
+		MediaPlayerProvider.getInstance().removeMediaPlayerManager(MEDIA_CONTROLLER_ADAPTER_KEY);
 	}
 }

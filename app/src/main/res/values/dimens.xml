@@ -3,4 +3,6 @@
 	<dimen name="artist_item_image_width">50dp</dimen>
 	<dimen name="padding_8dp">8dp</dimen>
 	<dimen name="artist_details_image_height">150dp</dimen>
+	<dimen name="track_item_loading_width">40dp</dimen>
+	<dimen name="track_item_loading_height">@dimen/track_item_loading_width</dimen>
 </resources>

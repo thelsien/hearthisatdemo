@@ -5,6 +5,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import thelsien.example.com.hearthisatdemo.models.Track;
 
@@ -18,8 +20,8 @@ public class MediaPlayerProvider {
 	@Nullable
 	private Track currentlyPlayingTrack;
 
-	@Nullable
-	private MediaPlayerManager mediaPlayerManager;
+	@NonNull
+	private Map<String, MediaPlayerController> mediaPlayerControllers = new HashMap<>();
 
 	private MediaPlayerProvider() {
 	}
@@ -50,12 +52,17 @@ public class MediaPlayerProvider {
 			return;
 		}
 
+		mediaPlayer.setOnErrorListener((mp, what, extra) -> {
+			mediaPlayer.release();
+			mediaPlayer = null;
+			return true;
+		});
 		mediaPlayer.setScreenOnWhilePlaying(true);
 		mediaPlayer.setOnCompletionListener(completionListener);
 		mediaPlayer.setOnPreparedListener(preparedListener);
 		mediaPlayer.prepareAsync();
-		if (mediaPlayerManager != null) {
-			mediaPlayerManager.onStartPressed();
+		for (final Map.Entry<String, MediaPlayerController> entry : mediaPlayerControllers.entrySet()) {
+			entry.getValue().onStartPressed();
 		}
 	}
 
@@ -66,8 +73,8 @@ public class MediaPlayerProvider {
 
 		mediaPlayer.pause();
 
-		if (mediaPlayerManager != null) {
-			mediaPlayerManager.onPausePressed();
+		for (final Map.Entry<String, MediaPlayerController> entry : mediaPlayerControllers.entrySet()) {
+			entry.getValue().onPausePressed();
 		}
 	}
 
@@ -78,18 +85,9 @@ public class MediaPlayerProvider {
 
 		mediaPlayer.start();
 
-		if (mediaPlayerManager != null) {
-			mediaPlayerManager.onStartPressed();
+		for (final Map.Entry<String, MediaPlayerController> entry : mediaPlayerControllers.entrySet()) {
+			entry.getValue().onStartPressed();
 		}
-	}
-
-	@Nullable
-	public String getCurrentlyPlayingTrackId() {
-		if (currentlyPlayingTrack == null) {
-			return null;
-		}
-
-		return currentlyPlayingTrack.getId();
 	}
 
 	public void stopPlayingTrack() {
@@ -97,17 +95,22 @@ public class MediaPlayerProvider {
 		if (mediaPlayer == null) {
 			return;
 		}
-		mediaPlayer.stop();
+
 		mediaPlayer.release();
 		mediaPlayer = null;
 
-		if (mediaPlayerManager != null) {
-			mediaPlayerManager.onStopPressed();
+		for (final Map.Entry<String, MediaPlayerController> entry : mediaPlayerControllers.entrySet()) {
+			entry.getValue().onStopPressed();
 		}
 	}
 
-	public void setMediaPlayerManager(@NonNull final MediaPlayerManager mediaPlayerManager) {
-		this.mediaPlayerManager = mediaPlayerManager;
+	public void addMediaPlayerManager(@NonNull final String key,
+			@NonNull final MediaPlayerController mediaPlayerController) {
+		mediaPlayerControllers.put(key, mediaPlayerController);
+	}
+
+	public void removeMediaPlayerManager(@NonNull final String key) {
+		mediaPlayerControllers.remove(key);
 	}
 
 	@Nullable
